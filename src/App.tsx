@@ -4,15 +4,20 @@ import { Session } from '@supabase/supabase-js';
 import { Auth } from '@/components/Auth';
 import { PresenceMap } from '@/components/PresenceMap';
 import { BonfireInput } from '@/components/BonfireInput';
+import { ModeSwitcher } from '@/components/ModeSwitcher';
+import { GlitchEffect } from '@/components/GlitchEffect';
+import { UrbanLegendGenerator } from '@/components/UrbanLegendGenerator';
 import { useCanvasStore } from '@/store/canvasStore';
 import { UserStatus } from '@/types';
 import { Settings } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const updateStatus = useCanvasStore((state) => state.updateStatus);
   const currentUserStatus = useCanvasStore((state) => state.currentUserStatus);
+  const mode = useCanvasStore((state) => state.mode);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
 
   useEffect(() => {
@@ -33,7 +38,7 @@ function App() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black text-zinc-500 font-light tracking-widest">
-        LOADING SILENCE...
+        LOADING...
       </div>
     );
   }
@@ -46,10 +51,53 @@ function App() {
 
   return (
     <div className="w-screen h-screen overflow-hidden bg-black text-white relative">
-      <PresenceMap />
-      <BonfireInput />
+      <GlitchEffect />
+      <ModeSwitcher />
+
+      {/* Layer Switch */}
+      <AnimatePresence mode="wait">
+        {mode === 'silence' ? (
+          <motion.div 
+            key="silence"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0"
+          >
+            <PresenceMap />
+            <BonfireInput />
+          </motion.div>
+        ) : (
+          <motion.div 
+            key="chaos"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 gap-8"
+          >
+            <div className="text-center space-y-2 relative z-10">
+              <h1 className="text-6xl font-bold text-red-600 tracking-tighter" style={{ textShadow: '2px 2px 0px #00f' }}>
+                CHAOS LAYER
+              </h1>
+              <p className="text-red-400 font-mono text-sm tracking-widest">
+                SYSTEM BREACH DETECTED...
+              </p>
+            </div>
+            
+            <UrbanLegendGenerator />
+            {/* Grid background for chaos */}
+             <div 
+                className="absolute inset-0 pointer-events-none opacity-10"
+                style={{
+                  backgroundImage: 'linear-gradient(to right, #ef4444 1px, transparent 1px), linear-gradient(to bottom, #ef4444 1px, transparent 1px)',
+                  backgroundSize: '40px 40px'
+                }}
+              />
+          </motion.div>
+        )}
+      </AnimatePresence>
       
-      {/* Status Selector */}
+      {/* Status Selector (Common UI) */}
       <div className="fixed top-8 left-8 z-30">
         <button 
           onClick={() => setShowStatusMenu(!showStatusMenu)}

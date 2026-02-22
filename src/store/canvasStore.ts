@@ -2,11 +2,14 @@ import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { Profile, Bonfire, UserStatus } from '@/types';
 
+export type AppMode = 'silence' | 'chaos';
+
 interface CanvasState {
   profiles: Profile[];
   bonfires: Bonfire[];
   isLoading: boolean;
   currentUserStatus: UserStatus;
+  mode: AppMode;
   
   // Actions
   fetchProfiles: () => Promise<void>;
@@ -14,6 +17,8 @@ interface CanvasState {
   addBonfire: (intensity: number) => Promise<void>;
   setProfiles: (profiles: Profile[]) => void;
   addBonfireEvent: (bonfire: Bonfire) => void;
+  setMode: (mode: AppMode) => void;
+  toggleMode: () => void;
 }
 
 export const useCanvasStore = create<CanvasState>((set, get) => ({
@@ -21,6 +26,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   bonfires: [],
   isLoading: false,
   currentUserStatus: 'neutral',
+  mode: 'silence',
 
   fetchProfiles: async () => {
     set({ isLoading: true });
@@ -82,5 +88,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         bonfires: state.bonfires.filter(b => b.id !== bonfire.id)
       }));
     }, 5000);
-  }
+  },
+  
+  setMode: (mode) => set({ mode }),
+  toggleMode: () => set((state) => ({ mode: state.mode === 'silence' ? 'chaos' : 'silence' })),
 }));
