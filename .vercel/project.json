@@ -1,1 +1,16 @@
-{"projectId":"prj_bXv0UJYqxH3O8Kw16E4VP0AQAaMU","orgId":"team_kNNAwAr30VGo29zbGKb5WqY0","projectName":"ai"}
+{
+  "projectId": "prj_bXv0UJYqxH3O8Kw16E4VP0AQAaMU",
+  "orgId": "team_kNNAwAr30VGo29zbGKb5WqY0",
+  "projectName": "ai",
+  "settings": {
+    "createdAt": 1771766599429,
+    "framework": "vite",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}

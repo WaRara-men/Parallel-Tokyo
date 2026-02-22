@@ -21,6 +21,8 @@ function App() {
   const currentUserStatus = useCanvasStore((state) => state.currentUserStatus);
   const mode = useCanvasStore((state) => state.mode);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [currentLegend, setCurrentLegend] = useState<string | null>(null);
+  const [isCameraActive, setIsCameraActive] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
