@@ -1,92 +1,93 @@
 import React, { useState } from 'react';
-import { Flame, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCanvasStore } from '@/store/canvasStore';
+import { Flame, Send, Sparkles } from 'lucide-react';
+import { useCanvasStore } from '../store/canvasStore';
+import { generatePurification } from '../lib/gemini';
 
 export const BonfireInput: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const [text, setText] = useState('');
   const [isBurning, setIsBurning] = useState(false);
+  const [purificationMessage, setPurificationMessage] = useState<string | null>(null);
   const addBonfire = useCanvasStore((state) => state.addBonfire);
 
-  const handleBurn = async () => {
+  const handleBurn = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!text.trim()) return;
-    
+
     setIsBurning(true);
+    setPurificationMessage(null); // Reset message
+
+    // Add visual bonfire immediately
+    const id = Math.random().toString(36).substr(2, 9);
+    addBonfire({
+      id,
+      text: text,
+      x: window.innerWidth / 2 + (Math.random() - 0.5) * 200,
+      y: window.innerHeight / 2 + (Math.random() - 0.5) * 200,
+      intensity: 1,
+      createdAt: Date.now(),
+    });
+
+    const worryText = text;
     
-    // Simulate "burning" delay and visual effect
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Send event to backend
-    await addBonfire(Math.min(text.length, 10)); // Intensity based on length
-    
-    setText('');
-    setIsBurning(false);
-    setIsOpen(false);
+    // Burning animation delay
+    setTimeout(async () => {
+      setText('');
+      setIsBurning(false);
+      
+      // Generate purification message after burning
+      const message = await generatePurification(worryText);
+      setPurificationMessage(message);
+      
+      // Clear message after 10 seconds
+      setTimeout(() => {
+        setPurificationMessage(null);
+      }, 10000);
+    }, 1500);
   };
 
   return (
-    <>
-      {/* Floating Action Button */}
-      <motion.button
-        onClick={() => setIsOpen(true)}
-        className={`fixed bottom-8 right-8 z-30 p-4 rounded-full bg-zinc-900/80 text-zinc-400 border border-zinc-800 shadow-2xl backdrop-blur-sm hover:text-orange-400 hover:border-orange-900/50 transition-colors ${isOpen ? 'hidden' : 'block'}`}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <Flame size={24} />
-      </motion.button>
-
-      {/* Input Modal */}
+    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-50">
       <AnimatePresence>
-        {isOpen && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-2xl p-6 shadow-2xl relative overflow-hidden"
-            >
-              {/* Burning Overlay Effect */}
-              {isBurning && (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="absolute inset-0 bg-orange-500/10 z-50 flex items-center justify-center backdrop-blur-[2px]"
-                >
-                  <div className="text-orange-500 font-serif tracking-widest animate-pulse">BURNING...</div>
-                </motion.div>
-              )}
-
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-zinc-400 font-light tracking-wide text-sm">WHAT'S ON YOUR MIND?</h2>
-                <button onClick={() => setIsOpen(false)} className="text-zinc-600 hover:text-zinc-300">
-                  <X size={20} />
-                </button>
-              </div>
-
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Write it down here. It will be burned and disappear forever."
-                className="w-full h-40 bg-transparent text-zinc-300 text-lg font-light placeholder:text-zinc-800 focus:outline-none resize-none mb-8"
-                autoFocus
-              />
-
-              <div className="flex justify-end">
-                <button
-                  onClick={handleBurn}
-                  disabled={!text.trim() || isBurning}
-                  className="group flex items-center gap-2 px-6 py-2 rounded-full bg-zinc-900 text-zinc-500 hover:text-orange-400 hover:bg-zinc-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Flame size={16} className="group-hover:animate-pulse" />
-                  <span className="text-sm tracking-widest">BURN</span>
-                </button>
-              </div>
-            </motion.div>
-          </div>
+        {purificationMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="mb-6 p-6 bg-black/40 backdrop-blur-md border border-orange-500/20 rounded-lg text-center shadow-2xl shadow-orange-900/20"
+          >
+            <Sparkles className="w-5 h-5 text-orange-300 mx-auto mb-2 opacity-70" />
+            <p className="text-orange-100/90 font-serif leading-relaxed text-sm md:text-base">
+              {purificationMessage}
+            </p>
+          </motion.div>
         )}
       </AnimatePresence>
-    </>
+
+      <form onSubmit={handleBurn} className="relative group">
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="燃やしたい感情を入力..."
+          className="w-full bg-black/30 backdrop-blur-sm border border-white/10 rounded-full py-4 pl-6 pr-14 text-white placeholder-white/30 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/20 transition-all shadow-lg"
+          disabled={isBurning}
+        />
+        <button
+          type="submit"
+          disabled={!text.trim() || isBurning}
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-orange-600/80 hover:bg-orange-500 rounded-full text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {isBurning ? (
+            <Flame className="w-5 h-5 animate-pulse text-yellow-200" />
+          ) : (
+            <Send className="w-5 h-5" />
+          )}
+        </button>
+        
+        {/* Glow effect */}
+        <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/0 via-orange-500/10 to-orange-500/0 rounded-full blur-xl pointer-events-none opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
+      </form>
+    </div>
   );
 };

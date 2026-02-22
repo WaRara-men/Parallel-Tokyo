@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { useCanvasStore } from '@/store/canvasStore';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
-import { Profile, Bonfire } from '@/types';
+import { Bonfire } from '@/types';
 
 // Helper to generate a consistent but random-looking position based on user ID
 const getUserPosition = (id: string) => {
@@ -32,8 +32,7 @@ export const PresenceMap: React.FC = () => {
   const profiles = useCanvasStore((state) => state.profiles);
   const bonfires = useCanvasStore((state) => state.bonfires);
   const fetchProfiles = useCanvasStore((state) => state.fetchProfiles);
-  const setProfiles = useCanvasStore((state) => state.setProfiles);
-  const addBonfireEvent = useCanvasStore((state) => state.addBonfireEvent);
+  const addBonfire = useCanvasStore((state) => state.addBonfire);
 
   useEffect(() => {
     fetchProfiles();
@@ -46,7 +45,6 @@ export const PresenceMap: React.FC = () => {
         { event: '*', schema: 'public', table: 'profiles' },
         (payload) => {
            if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-             // Refresh list (simplified) or update locally
              fetchProfiles(); 
            }
         }
@@ -60,7 +58,18 @@ export const PresenceMap: React.FC = () => {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'bonfires' },
         (payload) => {
-          addBonfireEvent(payload.new as Bonfire);
+          // Convert DB bonfire to visual bonfire
+          const dbBonfire = payload.new as Bonfire;
+          const pos = getUserPosition(dbBonfire.user_id);
+          
+          addBonfire({
+            id: dbBonfire.id,
+            text: "Someone is burning...", // We don't get text from DB for privacy
+            x: (pos.x / 100) * window.innerWidth,
+            y: (pos.y / 100) * window.innerHeight,
+            intensity: dbBonfire.intensity,
+            createdAt: Date.now()
+          });
         }
       )
       .subscribe();
@@ -69,7 +78,7 @@ export const PresenceMap: React.FC = () => {
       supabase.removeChannel(profileChannel);
       supabase.removeChannel(bonfireChannel);
     };
-  }, [fetchProfiles]);
+  }, [fetchProfiles, addBonfire]);
 
   return (
     <div className="w-full h-full relative overflow-hidden bg-[#050505]">
@@ -101,31 +110,26 @@ export const PresenceMap: React.FC = () => {
         );
       })}
 
-      {/* Bonfires (Ephemeral Events) */}
-      {bonfires.map((bonfire) => {
-        const profile = profiles.find(p => p.id === bonfire.user_id);
-        const pos = profile ? getUserPosition(profile.id) : { x: 50, y: 50 }; // Fallback to center
-        
-        return (
-          <motion.div
-            key={bonfire.id}
-            initial={{ opacity: 0, scale: 0.5, y: 0 }}
-            animate={{ 
-              opacity: [0, 1, 0], 
-              scale: [0.5, 2, 3],
-              y: -100 // Rise up
-            }}
-            transition={{ duration: 4, ease: "easeOut" }}
-            className="absolute z-20"
-            style={{ left: `${pos.x}vw`, top: `${pos.y}vh` }}
-          >
-            <div className="w-4 h-4 bg-orange-500 rounded-full blur-sm shadow-[0_0_20px_rgba(249,115,22,0.8)]" />
-            <div className="absolute top-0 left-0 w-full h-full animate-ping bg-orange-400 rounded-full opacity-75" />
-          </motion.div>
-        );
-      })}
+      {/* Bonfires (Visual Events) */}
+      {bonfires.map((bonfire) => (
+        <motion.div
+          key={bonfire.id}
+          initial={{ opacity: 0, scale: 0.5, y: 0 }}
+          animate={{ 
+            opacity: [0, 1, 0], 
+            scale: [0.5, 2, 3],
+            y: -100 // Rise up
+          }}
+          transition={{ duration: 4, ease: "easeOut" }}
+          className="absolute z-20 pointer-events-none"
+          style={{ left: bonfire.x, top: bonfire.y }}
+        >
+          <div className="w-4 h-4 bg-orange-500 rounded-full blur-sm shadow-[0_0_20px_rgba(249,115,22,0.8)]" />
+          <div className="absolute top-0 left-0 w-full h-full animate-ping bg-orange-400 rounded-full opacity-75" />
+        </motion.div>
+      ))}
       
-      <div className="absolute bottom-8 left-8 text-zinc-600 text-xs tracking-widest pointer-events-none">
+      <div className="absolute bottom-8 left-8 text-zinc-600 text-xs tracking-widest pointer-events-none font-mono opacity-50">
         PARALLEL TOKYO : SILENCE LAYER
       </div>
     </div>

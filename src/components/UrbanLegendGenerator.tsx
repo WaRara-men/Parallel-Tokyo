@@ -10,18 +10,17 @@ export const UrbanLegendGenerator: React.FC = () => {
     setIsGenerating(true);
     setLegend("");
     
-    // Get API Key from env or prompt
-    // Using VITE_GOOGLE_API_KEY for consistency
-    const apiKey = import.meta.env.VITE_GOOGLE_API_KEY || prompt("Enter Google Gemini API Key (Free Tier available) to unlock Chaos:");
+    // Check if API key is set in env
+    const hasEnvKey = !!import.meta.env.VITE_GOOGLE_API_KEY;
     
-    if (!apiKey) {
-      setLegend("ACCESS DENIED. API KEY REQUIRED.");
-      setIsGenerating(false);
-      return;
+    if (!hasEnvKey) {
+       // Only if strictly needed, we could ask, but for now let's rely on env
+       console.warn("No API Key in env, might fail if not mocked");
     }
 
     try {
-      const story = await generateUrbanLegend(apiKey);
+      // API Key is handled internally in generateUrbanLegend
+      const story = await generateUrbanLegend();
       setLegend(story);
     } catch (error) {
       setLegend("SIGNAL LOST. REALITY IS OFFLINE.");
