@@ -37,17 +37,17 @@ export const Auth: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 text-white p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 p-8 rounded-2xl shadow-2xl"
+        className="w-full max-w-md bg-zinc-900/30 backdrop-blur-md border border-zinc-800/50 p-8 rounded-2xl shadow-2xl"
       >
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent mb-2">
-            Nebula
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-light tracking-[0.2em] text-zinc-100 mb-2">
+            PARALLEL TOKYO
           </h1>
-          <p className="text-zinc-400">The space for your thoughts.</p>
+          <p className="text-zinc-500 text-xs tracking-widest uppercase">Layer: Silence</p>
         </div>
 
         <form onSubmit={handleAuth} className="flex flex-col gap-4">

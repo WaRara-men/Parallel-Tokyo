@@ -1,21 +1,16 @@
-export type ItemType = 'text' | 'image' | 'link';
+export type UserStatus = 'tired' | 'melancholy' | 'calm' | 'anxious' | 'neutral';
 
-export interface Item {
+export interface Profile {
   id: string;
-  user_id: string;
-  type: ItemType;
-  content: string;
-  position_x: number;
-  position_y: number;
-  cluster_id?: string;
-  created_at: string;
+  status: UserStatus;
+  color_theme: string;
+  last_active_at: string;
 }
 
-export interface Cluster {
+export interface Bonfire {
   id: string;
   user_id: string;
-  title: string;
-  centroid_x: number;
-  centroid_y: number;
+  intensity: number;
+  message_hash?: string;
   created_at: string;
 }

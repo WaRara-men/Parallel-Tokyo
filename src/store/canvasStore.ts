@@ -1,118 +1,86 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
-import { Item, Cluster, ItemType } from '@/types';
+import { Profile, Bonfire, UserStatus } from '@/types';
 
 interface CanvasState {
-  items: Item[];
-  clusters: Cluster[];
+  profiles: Profile[];
+  bonfires: Bonfire[];
   isLoading: boolean;
-  scale: number;
-  offset: { x: number; y: number };
+  currentUserStatus: UserStatus;
   
   // Actions
-  fetchItems: () => Promise<void>;
-  addItem: (type: ItemType, content: string, x: number, y: number) => Promise<void>;
-  updateItemPosition: (id: string, x: number, y: number) => Promise<void>;
-  setItems: (items: Item[]) => void;
-  setClusters: (clusters: Cluster[]) => void;
-  setScale: (scale: number) => void;
-  setOffset: (offset: { x: number; y: number }) => void;
+  fetchProfiles: () => Promise<void>;
+  updateStatus: (status: UserStatus) => Promise<void>;
+  addBonfire: (intensity: number) => Promise<void>;
+  setProfiles: (profiles: Profile[]) => void;
+  addBonfireEvent: (bonfire: Bonfire) => void;
 }
 
 export const useCanvasStore = create<CanvasState>((set, get) => ({
-  items: [],
-  clusters: [],
+  profiles: [],
+  bonfires: [],
   isLoading: false,
-  scale: 1,
-  offset: { x: 0, y: 0 },
+  currentUserStatus: 'neutral',
 
-  fetchItems: async () => {
+  fetchProfiles: async () => {
     set({ isLoading: true });
-    const { data: items, error: itemsError } = await supabase
-      .from('items')
-      .select('*');
     
-    if (itemsError) {
-      console.error('Error fetching items:', itemsError);
-    }
-
-    const { data: clusters, error: clustersError } = await supabase
-      .from('clusters')
-      .select('*');
-
-    if (clustersError) {
-      console.error('Error fetching clusters:', clustersError);
-    }
-
-    set({ 
-      items: items || [], 
-      clusters: clusters || [], 
-      isLoading: false 
-    });
-  },
-
-  addItem: async (type, content, x, y) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    // Fetch active profiles (e.g., active in last 1 hour)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     
-    if (!user) {
-      console.error('User not authenticated');
-      return;
-    }
-
-    const newItem = {
-      user_id: user.id,
-      type,
-      content,
-      position_x: x,
-      position_y: y,
-    };
-
-    // Optimistic update
-    const tempId = crypto.randomUUID();
-    set((state) => ({
-      items: [...state.items, { ...newItem, id: tempId, created_at: new Date().toISOString() } as Item],
-    }));
-
-    const { data, error } = await supabase
-      .from('items')
-      .insert(newItem)
-      .select()
-      .single();
+    const { data: profiles, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .gt('last_active_at', oneHourAgo);
 
     if (error) {
-      console.error('Error adding item:', error);
-      // Revert optimistic update
-      set((state) => ({
-        items: state.items.filter(i => i.id !== tempId),
-      }));
-    } else if (data) {
-      // Replace temp item with real one
-      set((state) => ({
-        items: state.items.map(i => i.id === tempId ? data : i),
-      }));
+      console.error('Error fetching profiles:', error);
     }
+
+    set({ profiles: profiles || [], isLoading: false });
   },
 
-  updateItemPosition: async (id, x, y) => {
+  updateStatus: async (status) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    set({ currentUserStatus: status });
+
     // Optimistic update
     set((state) => ({
-      items: state.items.map((item) =>
-        item.id === id ? { ...item, position_x: x, position_y: y } : item
-      ),
+      profiles: state.profiles.map(p => p.id === user.id ? { ...p, status } : p)
     }));
 
     const { error } = await supabase
-      .from('items')
-      .update({ position_x: x, position_y: y })
-      .eq('id', id);
+      .from('profiles')
+      .upsert({ id: user.id, status, last_active_at: new Date().toISOString() });
 
     if (error) {
-      console.error('Error updating item position:', error);
+      console.error('Error updating status:', error);
     }
   },
 
-  setItems: (items) => set({ items }),
-  setClusters: (clusters) => set({ clusters }),
-  setScale: (scale) => set({ scale }),
-  setOffset: (offset) => set({ offset }),
+  addBonfire: async (intensity) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('bonfires')
+      .insert({ user_id: user.id, intensity });
+
+    if (error) {
+      console.error('Error creating bonfire:', error);
+    }
+  },
+
+  setProfiles: (profiles) => set({ profiles }),
+  addBonfireEvent: (bonfire) => {
+    set((state) => ({ bonfires: [...state.bonfires, bonfire] }));
+    // Auto-remove bonfire after animation duration (e.g., 5 seconds)
+    setTimeout(() => {
+      set((state) => ({
+        bonfires: state.bonfires.filter(b => b.id !== bonfire.id)
+      }));
+    }, 5000);
+  }
 }));
