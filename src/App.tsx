@@ -87,8 +87,8 @@ function App() {
               </p>
             </div>
             
-            <UrbanLegendGenerator />
-            <GlitchCamera />
+            <UrbanLegendGenerator onLegendGenerated={setCurrentLegend} />
+            <GlitchCamera text={currentLegend} />
             {/* Grid background for chaos */}
              <div 
                 className="absolute inset-0 pointer-events-none opacity-10"

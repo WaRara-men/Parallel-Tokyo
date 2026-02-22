@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Camera, CameraOff } from 'lucide-react';
 
-export const GlitchCamera: React.FC = () => {
+interface Props {
+  text: string | null;
+}
+
+export const GlitchCamera: React.FC<Props> = ({ text }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isActive, setIsActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,29 +40,44 @@ export const GlitchCamera: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full max-w-2xl px-6 flex flex-col items-center">
+    <div className="w-full max-w-2xl px-6 flex flex-col items-center mt-4 z-10">
       {!isActive ? (
         <button
           onClick={startCamera}
-          className="w-full h-48 border-2 border-dashed border-red-900/50 bg-black/50 flex flex-col items-center justify-center gap-4 hover:border-red-600 hover:bg-red-900/10 transition-all group"
+          className="w-full h-48 border-2 border-dashed border-red-900/50 bg-black/50 flex flex-col items-center justify-center gap-4 hover:border-red-600 hover:bg-red-900/10 transition-all group backdrop-blur-sm"
         >
           <Camera size={32} className="text-red-700 group-hover:text-red-500" />
           <span className="text-red-700 font-mono text-xs tracking-widest group-hover:text-red-500">
-            INITIATE REALITY BREACH
+            INITIATE REALITY BREACH (AR MODE)
           </span>
         </button>
       ) : (
-        <div className="relative w-full aspect-video bg-black border border-red-600 overflow-hidden">
+        <div className="relative w-full aspect-video bg-black border border-red-600 overflow-hidden shadow-[0_0_50px_rgba(255,0,0,0.3)]">
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
-            className="w-full h-full object-cover filter contrast-125 saturate-150"
+            className="w-full h-full object-cover"
             style={{
               filter: 'hue-rotate(90deg) contrast(1.2) saturate(1.5)',
             }}
           />
+          
+          {/* AR Text Overlay */}
+          {text && (
+            <div className="absolute inset-0 flex items-center justify-center p-8 pointer-events-none">
+              <p 
+                className="font-mono text-xl md:text-2xl text-white font-bold text-center leading-relaxed"
+                style={{ 
+                  textShadow: '4px 0 0 rgba(255,0,0,0.8), -4px 0 0 rgba(0,255,255,0.8)',
+                  animation: 'shake 0.5s infinite'
+                }}
+              >
+                {text}
+              </p>
+            </div>
+          )}
           
           {/* Glitch Overlay Layers */}
           <div className="absolute inset-0 mix-blend-screen opacity-50 pointer-events-none">
@@ -74,7 +92,7 @@ export const GlitchCamera: React.FC = () => {
 
           <button
             onClick={stopCamera}
-            className="absolute bottom-4 right-4 p-2 bg-black/80 border border-red-600 text-red-600 rounded-full hover:bg-red-600 hover:text-black transition-colors"
+            className="absolute bottom-4 right-4 p-2 bg-black/80 border border-red-600 text-red-600 rounded-full hover:bg-red-600 hover:text-black transition-colors z-20"
           >
             <CameraOff size={20} />
           </button>
@@ -86,6 +104,22 @@ export const GlitchCamera: React.FC = () => {
           {error}
         </div>
       )}
+
+      <style>{`
+        @keyframes shake {
+          0% { transform: translate(1px, 1px) rotate(0deg); }
+          10% { transform: translate(-1px, -2px) rotate(-1deg); }
+          20% { transform: translate(-3px, 0px) rotate(1deg); }
+          30% { transform: translate(3px, 2px) rotate(0deg); }
+          40% { transform: translate(1px, -1px) rotate(1deg); }
+          50% { transform: translate(-1px, 2px) rotate(-1deg); }
+          60% { transform: translate(-3px, 1px) rotate(0deg); }
+          70% { transform: translate(3px, 1px) rotate(-1deg); }
+          80% { transform: translate(-1px, -1px) rotate(1deg); }
+          90% { transform: translate(1px, 2px) rotate(0deg); }
+          100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+      `}</style>
     </div>
   );
 };

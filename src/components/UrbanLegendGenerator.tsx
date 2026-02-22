@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { generateUrbanLegend } from '@/lib/gemini';
 
-export const UrbanLegendGenerator: React.FC = () => {
+interface Props {
+  onLegendGenerated: (text: string) => void;
+}
+
+export const UrbanLegendGenerator: React.FC<Props> = ({ onLegendGenerated }) => {
   const [legend, setLegend] = useState("");
   const [isGenerating, setIsGenerating] = useState(true);
 
@@ -14,16 +18,17 @@ export const UrbanLegendGenerator: React.FC = () => {
     const hasEnvKey = !!import.meta.env.VITE_GOOGLE_API_KEY;
     
     if (!hasEnvKey) {
-       // Only if strictly needed, we could ask, but for now let's rely on env
        console.warn("No API Key in env, might fail if not mocked");
     }
 
     try {
-      // API Key is handled internally in generateUrbanLegend
       const story = await generateUrbanLegend();
       setLegend(story);
+      onLegendGenerated(story);
     } catch (error) {
-      setLegend("SIGNAL LOST. REALITY IS OFFLINE.");
+      const errorMsg = "SIGNAL LOST. REALITY IS OFFLINE.";
+      setLegend(errorMsg);
+      onLegendGenerated(errorMsg);
     } finally {
       setIsGenerating(false);
     }
@@ -34,8 +39,8 @@ export const UrbanLegendGenerator: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full max-w-2xl px-6">
-      <div className="border border-red-600/50 bg-black/80 p-6 relative overflow-hidden">
+    <div className="w-full max-w-2xl px-6 relative z-20">
+      <div className="border border-red-600/50 bg-black/80 p-6 relative overflow-hidden backdrop-blur-sm">
         {/* Scanlines */}
         <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(255,0,0,0.1)_50%)] bg-[length:100%_4px] pointer-events-none" />
         
