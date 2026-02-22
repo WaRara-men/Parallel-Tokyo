@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { generateUrbanLegend } from '@/lib/openai';
+import { generateUrbanLegend } from '@/lib/gemini';
 
 export const UrbanLegendGenerator: React.FC = () => {
   const [legend, setLegend] = useState("");
@@ -11,7 +11,8 @@ export const UrbanLegendGenerator: React.FC = () => {
     setLegend("");
     
     // Get API Key from env or prompt
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY || prompt("Enter OpenAI API Key for Chaos Mode (sk-...):");
+    // Using VITE_GOOGLE_API_KEY for consistency
+    const apiKey = import.meta.env.VITE_GOOGLE_API_KEY || prompt("Enter Google Gemini API Key (Free Tier available) to unlock Chaos:");
     
     if (!apiKey) {
       setLegend("ACCESS DENIED. API KEY REQUIRED.");
