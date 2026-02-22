@@ -1,26 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-
-const MOCK_LEGENDS = [
-  "In the basement of Shibuya Station, there is a ticket gate that only opens at 3:33 AM. Those who pass through never return to the Yamanote Line.",
-  "The crows in Yoyogi Park aren't birds. They are surveillance drones left over from a failed 1980s government experiment. Listen closely, and you can hear their gears grinding.",
-  "If you stare at the Tokyo Tower from a specific angle in Roppongi, you can see the shadow of a second, inverted tower hanging from the sky.",
-  "There is a vending machine in Akihabara that sells 'yesterday's memories' in a can. Drinking it makes you forget who you were 24 hours ago."
-];
+import { generateUrbanLegend } from '@/lib/openai';
 
 export const UrbanLegendGenerator: React.FC = () => {
   const [legend, setLegend] = useState("");
   const [isGenerating, setIsGenerating] = useState(true);
 
-  useEffect(() => {
-    // Simulate AI generation delay
-    const timer = setTimeout(() => {
-      const randomLegend = MOCK_LEGENDS[Math.floor(Math.random() * MOCK_LEGENDS.length)];
-      setLegend(randomLegend);
+  const fetchLegend = async () => {
+    setIsGenerating(true);
+    setLegend("");
+    
+    // Get API Key from env or prompt
+    const apiKey = import.meta.env.VITE_OPENAI_API_KEY || prompt("Enter OpenAI API Key for Chaos Mode (sk-...):");
+    
+    if (!apiKey) {
+      setLegend("ACCESS DENIED. API KEY REQUIRED.");
       setIsGenerating(false);
-    }, 2000);
+      return;
+    }
 
-    return () => clearTimeout(timer);
+    try {
+      const story = await generateUrbanLegend(apiKey);
+      setLegend(story);
+    } catch (error) {
+      setLegend("SIGNAL LOST. REALITY IS OFFLINE.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLegend();
   }, []);
 
   return (
@@ -59,15 +69,7 @@ export const UrbanLegendGenerator: React.FC = () => {
         
         {!isGenerating && (
           <button 
-            onClick={() => {
-              setIsGenerating(true);
-              setLegend("");
-              setTimeout(() => {
-                const randomLegend = MOCK_LEGENDS[Math.floor(Math.random() * MOCK_LEGENDS.length)];
-                setLegend(randomLegend);
-                setIsGenerating(false);
-              }, 1500);
-            }}
+            onClick={fetchLegend}
             className="mt-6 w-full py-2 border border-red-600 text-red-600 font-mono text-sm hover:bg-red-600 hover:text-black transition-colors uppercase tracking-widest"
           >
             Scan Another Frequency

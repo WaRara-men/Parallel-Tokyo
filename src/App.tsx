@@ -7,6 +7,8 @@ import { BonfireInput } from '@/components/BonfireInput';
 import { ModeSwitcher } from '@/components/ModeSwitcher';
 import { GlitchEffect } from '@/components/GlitchEffect';
 import { UrbanLegendGenerator } from '@/components/UrbanLegendGenerator';
+import { GlitchCamera } from '@/components/GlitchCamera';
+import { AmbientAudio } from '@/components/AmbientAudio';
 import { useCanvasStore } from '@/store/canvasStore';
 import { UserStatus } from '@/types';
 import { Settings } from 'lucide-react';
@@ -53,6 +55,7 @@ function App() {
     <div className="w-screen h-screen overflow-hidden bg-black text-white relative">
       <GlitchEffect />
       <ModeSwitcher />
+      <AmbientAudio />
 
       {/* Layer Switch */}
       <AnimatePresence mode="wait">
@@ -85,6 +88,7 @@ function App() {
             </div>
             
             <UrbanLegendGenerator />
+            <GlitchCamera />
             {/* Grid background for chaos */}
              <div 
                 className="absolute inset-0 pointer-events-none opacity-10"
